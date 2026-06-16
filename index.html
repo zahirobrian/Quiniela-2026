@@ -279,12 +279,8 @@ let results = {};
 let currentGroup = 'all';
 const ME = 'BRIAN';
 
-function loadStorage() {
-  try { const s = localStorage.getItem('q2026'); if (s) results = JSON.parse(s); } catch(e){}
-}
-function saveStorage() {
-  try { localStorage.setItem('q2026', JSON.stringify(results)); } catch(e){}
-}
+function loadStorage() { /* deshabilitado — el Sheet es la fuente de verdad */ }
+function saveStorage() { /* deshabilitado — el Sheet es la fuente de verdad */ }
 const SHEET_ID = '1ADCVvutpcqITblMHM3OLj_GXnRXJkwJBhcWiUXaKs6Q';
 
 async function tryFetchAPI() {
@@ -299,6 +295,7 @@ async function tryFetchAPI() {
     if (!jsonStr) throw new Error('Formato inesperado del Sheet');
     const json = JSON.parse(jsonStr);
     const rows = json.table.rows;
+    results = {};
     let count = 0;
     rows.forEach(row => {
       if (!row || !row.c || !row.c[0] || !row.c[0].v) return;
@@ -542,7 +539,7 @@ function renderAll() {
   updateStatus();
 }
 
-loadStorage();
+// Siempre cargar desde el Sheet al iniciar
 renderAll();
 
 // Auto-refresh cada 5 minutos
