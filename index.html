@@ -144,6 +144,38 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:13px;padding:9px 20px;border-radius:100px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+
+/* DUEL */
+.duel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
+.duel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg,var(--surface2),var(--surface))}
+.duel-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.duel-players{display:flex;align-items:center;gap:8px}
+.duel-name{font-size:14px;font-weight:800}
+.duel-name.p1{color:var(--gold)}
+.duel-name.p2{color:var(--purple)}
+.duel-vs{font-size:11px;color:var(--text3);padding:0 4px}
+.duel-scores{display:flex;align-items:center;gap:6px}
+.duel-score{font-size:22px;font-weight:900;min-width:36px;text-align:center;padding:4px 10px;border-radius:8px}
+.duel-score.p1{color:var(--gold);background:var(--gold-dim)}
+.duel-score.p2{color:var(--purple);background:var(--purple-dim)}
+.duel-sep{font-size:16px;color:var(--text3)}
+.duel-body{padding:10px 12px}
+.duel-match{display:flex;align-items:center;gap:6px;padding:5px 4px;border-radius:8px;margin-bottom:3px}
+.duel-match.pending{opacity:.6}
+.duel-match-name{font-size:12px;color:var(--text2);flex:1}
+.duel-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.duel-dot.p1win{background:var(--gold-dim);color:var(--gold)}
+.duel-dot.p2win{background:var(--purple-dim);color:var(--purple)}
+.duel-dot.both{background:var(--green-dim);color:var(--green)}
+.duel-dot.none{background:var(--surface2);color:var(--text3)}
+.duel-preds{display:flex;gap:4px;align-items:center}
+.duel-pred{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
+.duel-pred.p1{background:var(--gold-dim);color:var(--gold)}
+.duel-pred.p2{background:var(--purple-dim);color:var(--purple)}
+.duel-legend{display:flex;gap:10px;padding:8px 12px;border-top:1px solid var(--border);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.duel-tie{text-align:center;padding:8px;font-size:11px;color:var(--gold);font-weight:600;background:var(--gold-dim);border-radius:8px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -173,6 +205,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
     <button class="btn" onclick="tryFetchAPI()">↻ Actualizar</button>
   </div>
   <div class="podium" id="podium"></div>
+  <div id="duel-section"></div>
   <input class="search" placeholder="🔍 Buscar participante..." id="search" oninput="renderRanking()"/>
   <table class="rank-table" id="rank-table"><tbody id="rank-body"></tbody></table>
 </div>
@@ -275,6 +308,116 @@ function resLabel(actual,t1,t2){
   return 'Sin resultado';
 }
 function resCls(actual){return actual===1?'res-1':actual===2?'res-x':actual===3?'res-2':'res-none';}
+
+// ── DUELO PRIMER VS SEGUNDO ──────────────────────────────────────────────────
+function renderDuel(){
+  const{scores}=calcScores();
+  const played=countPlayed();
+  const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const el=document.getElementById('duel-section');
+  if(!el||sorted.length<2) return;
+
+  // Puede haber empate en el primer lugar
+  const topScore=sorted[0][1];
+  const secondScore=sorted[1][1];
+  const p1name=sorted[0][0];
+  const p2name=sorted[1][0];
+  const p1preds=QUINIELAS[p1name];
+  const p2preds=QUINIELAS[p2name];
+
+  // Partidos donde difieren
+  const diffs=[];
+  MATCHES.forEach((match,idx)=>{
+    const pred1=p1preds[idx];
+    const pred2=p2preds[idx];
+    if(pred1===pred2) return; // iguales, no importan
+    const actual=getOutcome(results[match]);
+    const[t1,t2]=match.split('-');
+    diffs.push({match,idx,pred1,pred2,actual,t1,t2});
+  });
+
+  // Puntos ganados en partidos clave (solo los que difieren)
+  let p1key=0, p2key=0;
+  diffs.forEach(({pred1,pred2,actual})=>{
+    if(actual===null) return;
+    if(pred1===actual) p1key++;
+    if(pred2===actual) p2key++;
+  });
+
+  const pending=diffs.filter(d=>getOutcome(results[d.match])===null);
+  const played2=diffs.filter(d=>getOutcome(results[d.match])!==null);
+
+  const isTied=topScore===secondScore;
+
+  let html=`<div class="duel-card">
+    <div class="duel-header">
+      <div>
+        <p class="duel-title">⚔️ Duelo por el primer lugar</p>
+        <div class="duel-players" style="margin-top:4px">
+          <span class="duel-name p1">${p1name}</span>
+          <span class="duel-vs">${isTied?'🤝 EMPATE':'vs'}</span>
+          <span class="duel-name p2">${p2name}</span>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:4px">pts totales</p>
+        <div class="duel-scores">
+          <span class="duel-score p1">${topScore}</span>
+          <span class="duel-sep">—</span>
+          <span class="duel-score p2">${secondScore}</span>
+        </div>
+      </div>
+    </div>
+    <div class="duel-body">
+      ${isTied?`<div class="duel-tie">🤝 Empate en el primer lugar — los partidos pendientes decidirán al ganador</div>`:''}
+      ${pending.length===0&&played2.length===0?'<p style="font-size:12px;color:var(--text3);text-align:center;padding:8px">No hay partidos donde difieran sus predicciones</p>':''}`;
+
+  if(pending.length>0){
+    html+=`<p style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🔥 Partidos clave pendientes (${pending.length})</p>`;
+    pending.forEach(({match,pred1,pred2,t1,t2})=>{
+      html+=`<div class="duel-match pending">
+        <span class="duel-match-name">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''}</span>
+        <div class="duel-preds">
+          <span class="duel-pred p1" title="${p1name}">${predLabel(pred1)}</span>
+          <span style="font-size:10px;color:var(--text3)">vs</span>
+          <span class="duel-pred p2" title="${p2name}">${predLabel(pred2)}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  if(played2.length>0){
+    html+=`<p style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 6px">Partidos clave jugados</p>`;
+    played2.forEach(({match,pred1,pred2,actual,t1,t2})=>{
+      const hit1=pred1===actual, hit2=pred2===actual;
+      let dotCls, dotIcon;
+      if(hit1&&hit2){dotCls='both';dotIcon='=';}
+      else if(hit1){dotCls='p1win';dotIcon='1';}
+      else if(hit2){dotCls='p2win';dotIcon='2';}
+      else{dotCls='none';dotIcon='✗';}
+      html+=`<div class="duel-match">
+        <div class="duel-dot ${dotCls}">${dotIcon}</div>
+        <span class="duel-match-name">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''}</span>
+        <div class="duel-preds">
+          <span class="duel-pred p1" style="${hit1?'':'opacity:.4'}">${predLabel(pred1)}</span>
+          <span style="font-size:10px;color:var(--text3)">vs</span>
+          <span class="duel-pred p2" style="${hit2?'':'opacity:.4'}">${predLabel(pred2)}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  html+=`</div>
+    <div class="duel-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>${p1name}</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>${p2name}</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Ambos aciertan</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--surface3)"></div>Ninguno acierta</div>
+    </div>
+  </div>`;
+
+  el.innerHTML=html;
+}
 
 // ── POSICIONES ───────────────────────────────────────────────────────────────
 function renderRanking(){
@@ -501,7 +644,7 @@ async function tryFetchAPI(){
   updateStatus();
 }
 
-function renderAll(){renderRanking();updateStatus();}
+function renderAll(){renderRanking();renderDuel();updateStatus();}
 
 renderAll();
 tryFetchAPI();
