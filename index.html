@@ -208,13 +208,8 @@
   <!-- Panel: Admin / Resultados -->
   <div id="panel-admin" class="panel">
     <div class="admin-section">
-      <p class="admin-title">🔑 API automática (football-data.org)</p>
-      <p class="admin-sub">Regístrate gratis en <strong>football-data.org</strong> para obtener tu token y que los resultados se carguen automáticamente.</p>
-      <div class="token-row">
-        <input class="token-input" id="token-input" placeholder="Pega tu token aquí..." />
-        <button class="btn primary" onclick="saveToken()">Guardar</button>
-      </div>
-      <p style="font-size:11px;color:var(--text3);margin-top:6px" id="token-status"></p>
+      <p class="admin-title">🔄 API automática</p>
+      <p class="admin-sub">Los resultados se cargan automáticamente desde football-data.org cada 5 minutos. También puedes forzar una actualización con el botón ↻ Actualizar.</p>
     </div>
 
     <div class="admin-section">
@@ -290,14 +285,12 @@ function loadStorage() {
 function saveStorage() {
   try { localStorage.setItem('q2026', JSON.stringify(results)); } catch(e){}
 }
+const EMBEDDED_TOKEN = 'eb09778838154923b35ab64d2587eecb';
 function loadToken() {
-  try { return localStorage.getItem('q2026_token') || ''; } catch(e){ return ''; }
+  return EMBEDDED_TOKEN;
 }
 function saveToken() {
-  const t = document.getElementById('token-input').value.trim();
-  try { localStorage.setItem('q2026_token', t); } catch(e){}
-  document.getElementById('token-status').textContent = t ? '✓ Token guardado. Usa "Actualizar" para cargar resultados.' : 'Token borrado.';
-  toast('Token guardado');
+  toast('Token ya está integrado en la app');
 }
 
 // ── SCORING ──────────────────────────────────────────────────────────────────
