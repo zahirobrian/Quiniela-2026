@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 Quiniela Super Prime — Mundial 2026</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f8f6;
+    --surface: #ffffff;
+    --surface2: #f2f2ef;
+    --border: rgba(0,0,0,.1);
+    --border2: rgba(0,0,0,.18);
+    --text: #1a1a18;
+    --text2: #5a5a56;
+    --text3: #8a8a86;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --red: #A32D2D;
+    --red-bg: #FCEBEB;
+    --amber: #854F0B;
+    --amber-bg: #FAEEDA;
+    --gold: #EF9F27;
+    --shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2e2e2b;
+      --border: rgba(255,255,255,.1);
+      --border2: rgba(255,255,255,.18);
+      --text: #f0f0ec;
+      --text2: #a0a09c;
+      --text3: #6a6a66;
+      --blue: #6BAED6;
+      --blue-bg: #0C2540;
+      --green: #8CC665;
+      --green-bg: #172B08;
+      --red: #E88080;
+      --red-bg: #280E0E;
+      --amber: #E8B060;
+      --amber-bg: #2A1A05;
+    }
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Layout ── */
+  .app { max-width: 700px; margin: 0 auto; padding: 0 0 4rem; }
+
+  /* ── Header ── */
+  .header { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 1rem 1.25rem; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; }
+  .header-icon { font-size: 24px; }
+  .header-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--text2); }
+  .header-status { margin-left: auto; font-size: 11px; color: var(--text3); text-align: right; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; background: var(--surface); border-bottom: 0.5px solid var(--border); overflow-x: auto; }
+  .tab { padding: 10px 16px; font-size: 13px; font-weight: 500; border: none; background: none; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; white-space: nowrap; flex-shrink: 0; }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 1rem 1rem 0; }
+  .panel.active { display: block; }
+
+  /* ── Podium ── */
+  .podium { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1rem; }
+  .pod { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: .75rem; text-align: center; }
+  .pod.gold { border-color: var(--gold); background: var(--amber-bg); }
+  .pod.silver { border-color: #B4B2A9; background: var(--surface2); }
+  .pod.bronze { border-color: #D85A30; background: #FAECE7; }
+  @media (prefers-color-scheme:dark) {
+    .pod.bronze { background: #1F0A04; }
+  }
+  .pod-medal { font-size: 22px; display: block; }
+  .pod-name { font-size: 12px; font-weight: 600; margin: 4px 0 2px; color: var(--text); }
+  .pod-pts { font-size: 24px; font-weight: 700; color: var(--text); }
+  .pod-of { font-size: 10px; color: var(--text3); }
+
+  /* ── Ranking table ── */
+  .search { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 13px; margin-bottom: .75rem; }
+  .search:focus { outline: none; border-color: var(--blue); }
+  .rank-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 12px; overflow: hidden; border: 0.5px solid var(--border); }
+  .rank-table th { font-size: 11px; font-weight: 600; color: var(--text3); padding: 8px 10px; border-bottom: 0.5px solid var(--border); text-align: left; text-transform: uppercase; letter-spacing: .04em; }
+  .rank-table td { padding: 9px 10px; font-size: 13px; border-bottom: 0.5px solid var(--border); }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-table tr:hover td { background: var(--surface2); }
+  .rank-table tr.me td { background: rgba(24,95,165,.06); }
+  .pts-pill { display: inline-block; background: var(--blue-bg); color: var(--blue); border-radius: 100px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+  .bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .bar-bg { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width .5s; }
+  .pct { font-size: 11px; color: var(--text3); min-width: 30px; }
+
+  /* ── Match cards ── */
+  .group-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 12px 0 6px; }
+  .match-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; border-left: 3px solid var(--border); }
+  .match-card.played { border-left-color: var(--green); }
+  .match-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .teams { font-size: 13px; font-weight: 500; color: var(--text); }
+  .teams .flag { font-size: 15px; }
+  .teams .sep { color: var(--text3); font-size: 11px; padding: 0 4px; }
+  .res-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; white-space: nowrap; }
+  .res-1 { background: var(--green-bg); color: var(--green); }
+  .res-x { background: var(--amber-bg); color: var(--amber); }
+  .res-2 { background: var(--blue-bg); color: var(--blue); }
+  .res-none { background: var(--surface2); color: var(--text3); }
+  .pred-row { display: flex; gap: 3px; flex-wrap: wrap; }
+  .chip { font-size: 10px; padding: 2px 6px; border-radius: 100px; border: 0.5px solid var(--border); color: var(--text3); background: var(--surface2); }
+  .chip.hit { background: var(--green-bg); color: var(--green); border-color: #97C459; }
+  .chip.miss { background: var(--red-bg); color: var(--red); border-color: #F09595; }
+
+  /* ── Result inputs ── */
+  .res-sel { font-size: 12px; padding: 4px 8px; border: 0.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }
+  .match-card .match-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+  /* ── Stats ── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .stat-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: .9rem 1rem; }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── Admin panel ── */
+  .admin-section { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+  .admin-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: .5rem; }
+  .admin-sub { font-size: 12px; color: var(--text2); margin-bottom: .75rem; }
+  .token-row { display: flex; gap: 6px; }
+  .token-input { flex: 1; font-size: 12px; padding: 7px 10px; border: 0.5px solid var(--border); border-radius: 8px; background: var(--surface2); color: var(--text); }
+  .btn { font-size: 12px; padding: 7px 14px; border: 0.5px solid var(--border2); border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; font-weight: 500; }
+  .btn:hover { background: var(--surface2); }
+  .btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn.primary:hover { opacity: .9; }
+  .btn.danger { color: var(--red); border-color: var(--red); }
+
+  /* ── Filter bar ── */
+  .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: .75rem; overflow-x: auto; }
+  .filter-btn { font-size: 11px; padding: 4px 10px; border: 0.5px solid var(--border); border-radius: 100px; background: transparent; cursor: pointer; color: var(--text2); white-space: nowrap; }
+  .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* ── Misc ── */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 1rem 0 .6rem; }
+  .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
+  .spin { display: inline-block; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1a1a18; color: #fff; font-size: 13px; padding: 8px 18px; border-radius: 100px; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .refresh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+  .last-upd { font-size: 11px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-icon">🏆</span>
+    <div>
+      <div class="header-title">Quiniela Super Prime</div>
+      <div class="header-sub">FIFA Mundial 2026 · Fase de grupos</div>
+    </div>
+    <div class="header-status" id="header-status">Cargando...</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('posiciones',this)">Posiciones</button>
+    <button class="tab" onclick="showTab('partidos',this)">Partidos</button>
+    <button class="tab" onclick="showTab('stats',this)">Estadísticas</button>
+    <button class="tab" onclick="showTab('admin',this)">⚙ Resultados</button>
+  </div>
+
+  <!-- Panel: Posiciones -->
+  <div id="panel-posiciones" class="panel active">
+    <div class="refresh-row" style="margin-top:.75rem">
+      <span class="last-upd" id="last-upd">—</span>
+      <button class="btn" onclick="tryFetchAPI()">↻ Actualizar</button>
+    </div>
+    <div class="podium" id="podium"></div>
+    <input class="search" placeholder="Buscar participante..." id="search" oninput="renderRanking()" />
+    <table class="rank-table">
+      <thead><tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Progreso</th></tr></thead>
+      <tbody id="rank-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Panel: Partidos -->
+  <div id="panel-partidos" class="panel">
+    <div class="filter-bar" id="group-filters"></div>
+    <div id="matches-list"></div>
+  </div>
+
+  <!-- Panel: Estadísticas -->
+  <div id="panel-stats" class="panel">
+    <div class="stats-grid" id="stats-grid"></div>
+    <p class="section-title">Partidos más acertados</p>
+    <div id="most-correct"></div>
+    <p class="section-title">Partidos más polémicos (menos acertados)</p>
+    <div id="least-correct"></div>
+  </div>
+
+  <!-- Panel: Admin / Resultados -->
+  <div id="panel-admin" class="panel">
+    <div class="admin-section">
+      <p class="admin-title">🔑 API automática (football-data.org)</p>
+      <p class="admin-sub">Regístrate gratis en <strong>football-data.org</strong> para obtener tu token y que los resultados se carguen automáticamente.</p>
+      <div class="token-row">
+        <input class="token-input" id="token-input" placeholder="Pega tu token aquí..." />
+        <button class="btn primary" onclick="saveToken()">Guardar</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:6px" id="token-status"></p>
+    </div>
+
+    <div class="admin-section">
+      <p class="admin-title">✏️ Ingreso manual de resultados</p>
+      <p class="admin-sub">1 = gana el local &nbsp;·&nbsp; X = empate &nbsp;·&nbsp; 2 = gana el visitante</p>
+      <div id="manual-inputs"></div>
+      <button class="btn danger" style="margin-top:.75rem" onclick="clearAll()">Borrar todos los resultados</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const MATCHES = ["MEX-RSA","COR-RPC","RPC-RSA","MEX-COR","RSA-COR","RPC-MEX","CAN-BOS","QAT-SUI","SUI-BOS","CAN-QTA","BOS-QAT","SUI-CAN","BRA-MAR","HAI-ESC","ESC-MAR","BRA-HAI","ESC-BRA","MAR-HAI","USA-PAR","AUS-TUR","USA-AUS","TUR-PAR","PAR-AUS","TUR-USA","ALE-CUR","CDM-ECU","ALE-CDM","ECU-CUR","CUR-CDM","ECU-ALE","PBA-JAP","SUE-TUN","PBA-SUE","TUN-JAP","JAP-SUE","TUN-PBA","BEL-EGI","IRA-NZL","BEL-IRA","NZL-EGI","NZL-BEL","EGI-PARA","ESP-CAB","ARA-URU","ESP-ARA","URU-CAB","CAB-ARA","URU-ESP","FRA-SEN","IRK-NOR","FRA-IRK","NOR-SEN","SEN-IRK","NOR-FRA","ARG-ALG","AUT-JOR","ARG-AUT","JOR-ALG","ALG-AUT","JOR-ARG","POR-RDC","UZB-COL","POR-UZB","COL-RDC","RDC-UZB","COL-POR","ING-CRO","GHA-PAN","ING-GHA","PAN-CRO","CRO-GHA","PAN-ING"];
+
+const GROUPS = {
+  A:["MEX-RSA","COR-RPC","RPC-RSA","MEX-COR","RSA-COR","RPC-MEX"],
+  B:["CAN-BOS","QAT-SUI","SUI-BOS","CAN-QTA","BOS-QAT","SUI-CAN"],
+  C:["BRA-MAR","HAI-ESC","ESC-MAR","BRA-HAI","ESC-BRA","MAR-HAI"],
+  D:["USA-PAR","AUS-TUR","USA-AUS","TUR-PAR","PAR-AUS","TUR-USA"],
+  E:["ALE-CUR","CDM-ECU","ALE-CDM","ECU-CUR","CUR-CDM","ECU-ALE"],
+  F:["PBA-JAP","SUE-TUN","PBA-SUE","TUN-JAP","JAP-SUE","TUN-PBA"],
+  G:["BEL-EGI","IRA-NZL","BEL-IRA","NZL-EGI","NZL-BEL","EGI-PARA"],
+  H:["ESP-CAB","ARA-URU","ESP-ARA","URU-CAB","CAB-ARA","URU-ESP"],
+  I:["FRA-SEN","IRK-NOR","FRA-IRK","NOR-SEN","SEN-IRK","NOR-FRA"],
+  J:["ARG-ALG","AUT-JOR","ARG-AUT","JOR-ALG","ALG-AUT","JOR-ARG"],
+  K:["POR-RDC","UZB-COL","POR-UZB","COL-RDC","RDC-UZB","COL-POR"],
+  L:["ING-CRO","GHA-PAN","ING-GHA","PAN-CRO","CRO-GHA","PAN-ING"]
+};
+
+const FLAGS = {MEX:"🇲🇽",RSA:"🇿🇦",COR:"🇰🇷",RPC:"🇨🇷",CAN:"🇨🇦",BOS:"🇧🇦",QAT:"🇶🇦",SUI:"🇨🇭",BRA:"🇧🇷",MAR:"🇲🇦",HAI:"🇭🇹",ESC:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",USA:"🇺🇸",PAR:"🇵🇾",AUS:"🇦🇺",TUR:"🇹🇷",ALE:"🇩🇪",CUR:"🇨🇼",CDM:"🇨🇮",ECU:"🇪🇨",PBA:"🇳🇱",JAP:"🇯🇵",SUE:"🇸🇪",TUN:"🇹🇳",BEL:"🇧🇪",EGI:"🇪🇬",IRA:"🇮🇷",NZL:"🇳🇿",ESP:"🇪🇸",CAB:"🇨🇻",ARA:"🇸🇦",URU:"🇺🇾",FRA:"🇫🇷",SEN:"🇸🇳",IRK:"🇮🇶",NOR:"🇳🇴",ARG:"🇦🇷",ALG:"🇩🇿",AUT:"🇦🇹",JOR:"🇯🇴",POR:"🇵🇹",RDC:"🇨🇩",UZB:"🇺🇿",COL:"🇨🇴",ING:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",CRO:"🇭🇷",GHA:"🇬🇭",PAN:"🇵🇦",PARA:"🇵🇾",QTA:"🇶🇦"};
+
+// Nombres completos para legibilidad
+const NAMES = {MEX:"México",RSA:"Sudáfrica",COR:"Corea del Sur",RPC:"Costa Rica",CAN:"Canadá",BOS:"Bosnia",QAT:"Qatar",SUI:"Suiza",BRA:"Brasil",MAR:"Marruecos",HAI:"Haití",ESC:"Escocia",USA:"EE.UU.",PAR:"Paraguay",AUS:"Australia",TUR:"Turquía",ALE:"Alemania",CUR:"Curazao",CDM:"Costa de Marfil",ECU:"Ecuador",PBA:"Países Bajos",JAP:"Japón",SUE:"Suecia",TUN:"Túnez",BEL:"Bélgica",EGI:"Egipto",IRA:"Irán",NZL:"Nueva Zelanda",ESP:"España",CAB:"Cabo Verde",ARA:"Arabia Saudí",URU:"Uruguay",FRA:"Francia",SEN:"Senegal",IRK:"Irak",NOR:"Noruega",ARG:"Argentina",ALG:"Argelia",AUT:"Austria",JOR:"Jordania",POR:"Portugal",RDC:"R.D. Congo",UZB:"Uzbekistán",COL:"Colombia",ING:"Inglaterra",CRO:"Croacia",GHA:"Ghana",PAN:"Panamá",PARA:"Paraguay",QTA:"Qatar"};
+
+const QUINIELAS = {
+  "GALLO":  [1,1,3,1,3,3,1,3,1,1,2,1,1,3,1,1,3,1,2,3,1,3,1,3,1,3,1,1,2,3,3,1,3,1,2,2,1,3,1,2,2,1,1,3,1,1,3,3,1,2,1,3,1,3,1,1,1,3,2,3,1,3,1,1,2,3,2,1,2,3,1,3],
+  "LALO":   [1,3,1,1,2,2,1,3,2,2,1,1,1,3,3,1,3,1,1,3,1,1,2,1,1,1,1,1,3,3,1,2,1,3,2,3,1,1,1,3,3,2,1,3,1,1,3,2,1,3,1,2,1,3,1,1,1,3,2,3,1,3,1,1,2,3,2,1,1,3,1,3],
+  "GER":    [1,1,2,2,3,3,1,3,1,1,3,2,2,3,3,1,3,1,1,3,1,2,1,2,1,3,1,1,2,3,3,3,1,3,2,3,1,3,1,3,3,1,1,3,1,1,3,2,1,3,1,2,1,3,2,1,1,3,3,3,1,3,1,1,1,3,1,1,1,3,1,3],
+  "OSCAR":  [1,1,2,1,3,2,1,2,1,2,3,2,1,3,3,1,3,1,2,3,1,3,1,2,1,3,1,1,3,1,3,1,3,1,3,3,1,3,1,3,3,3,1,3,1,1,1,2,1,3,1,3,1,3,2,1,1,1,1,2,1,3,1,1,3,1,1,1,1,1,1,3],
+  "EDGAR":  [1,2,1,1,3,3,1,3,1,1,1,1,1,3,2,1,3,1,1,3,2,1,1,2,1,1,1,1,3,3,3,1,1,3,2,3,1,2,2,3,3,1,1,3,1,1,3,3,1,3,1,2,1,3,1,1,1,2,3,3,1,3,1,1,1,3,1,3,1,2,1,3],
+  "TAIDER": [1,1,2,2,3,3,1,3,1,2,2,3,1,2,1,1,3,2,1,1,1,1,1,1,1,1,1,2,1,3,3,2,1,2,1,2,1,2,3,1,2,3,1,3,1,2,1,3,1,1,2,2,3,3,1,1,1,3,2,3,1,3,2,2,3,2,1,3,2,2,3,1],
+  "TOSTADO":[1,2,2,1,3,3,2,2,1,1,2,2,3,2,3,1,3,1,1,2,1,3,1,3,1,3,1,1,2,3,3,1,3,3,1,3,3,2,1,2,3,1,1,3,1,1,3,3,1,3,1,1,1,2,1,3,1,1,2,3,1,3,1,1,3,2,3,1,1,3,1,3],
+  "LEO":    [1,1,3,2,2,3,1,3,1,2,2,2,1,3,3,1,2,2,1,3,1,3,2,2,1,3,1,2,2,3,1,1,2,3,1,2,1,3,1,3,3,1,1,3,1,1,3,2,1,3,1,2,3,2,1,2,1,2,2,3,1,3,1,1,2,2,1,1,1,3,2,3],
+  "YOCO":   [1,2,1,1,3,3,2,3,1,2,1,1,1,2,3,1,3,2,2,1,1,3,1,3,1,3,1,1,3,3,1,1,3,2,3,3,1,3,1,1,2,3,1,3,1,1,1,3,1,3,1,3,1,3,1,2,1,2,1,3,1,3,1,1,2,3,2,1,1,3,1,3],
+  "BRIAN":  [1,1,1,2,3,3,1,3,1,1,3,2,2,3,3,1,3,1,1,3,2,1,1,3,1,1,1,1,3,3,2,1,1,3,1,3,1,1,1,3,3,2,1,2,1,1,3,3,1,3,1,2,1,3,1,1,1,2,3,3,1,3,1,1,3,3,1,1,3,3,2,3],
+  "ADRIANA":[1,2,2,2,3,2,2,3,1,1,2,3,2,3,3,1,3,1,3,3,1,2,1,2,1,2,1,1,3,2,1,3,1,2,1,3,3,1,2,3,3,2,1,3,1,1,3,3,2,2,1,3,1,3,1,1,2,3,2,3,1,3,1,2,1,3,2,1,1,3,1,3],
+  "DON MSB":[1,1,1,1,3,3,1,3,1,1,3,1,1,3,3,1,3,1,3,3,1,2,1,3,1,2,1,1,3,3,1,1,1,3,2,3,1,1,1,3,3,2,1,3,1,1,3,2,1,3,1,1,1,3,1,1,1,2,3,3,1,3,1,1,3,3,1,2,1,3,1,3],
+  "TEO":    [1,1,1,2,3,3,1,3,1,1,3,2,3,1,3,1,3,1,3,3,1,2,1,1,1,3,1,1,3,2,1,3,1,3,1,3,1,3,1,3,3,1,1,3,1,1,3,3,1,3,1,1,1,3,1,1,1,1,2,3,1,3,1,1,1,3,1,3,1,3,1,3],
+  "FREDY":  [1,1,1,1,3,3,1,3,1,1,1,3,1,3,3,1,3,1,1,3,1,2,1,3,1,3,1,1,3,3,1,1,1,3,2,3,1,1,1,3,3,1,1,3,1,1,2,2,1,3,1,2,1,3,1,1,1,3,3,3,1,3,1,1,1,2,1,1,1,3,1,3],
+  "NERY":   [1,1,3,1,1,3,1,2,1,1,2,3,1,3,3,1,2,1,1,3,1,1,2,3,1,3,1,3,2,1,2,1,1,3,1,3,2,1,1,3,3,1,1,1,1,2,3,3,1,3,1,1,2,2,1,1,1,3,1,3,1,3,1,1,3,3,1,1,1,3,1,3],
+  "LUIS":   [1,1,1,1,3,3,1,3,1,1,3,1,1,3,2,1,3,1,2,3,1,3,1,2,1,1,1,1,3,3,1,1,1,3,2,3,1,1,1,3,3,2,1,3,1,1,3,3,1,3,1,1,2,3,1,1,1,3,1,3,1,3,1,1,1,2,1,1,1,3,1,3],
+  "CARLOS": [1,1,3,2,3,3,1,3,1,1,2,1,1,2,1,1,3,1,2,1,1,3,3,3,1,3,1,1,2,3,3,1,3,3,3,1,3,3,1,3,3,1,1,3,1,1,2,3,1,3,1,1,1,3,1,1,1,1,3,3,1,3,1,1,2,3,1,3,1,3,1,3],
+  "QUETZAL":[1,1,1,1,3,3,1,3,1,1,1,2,1,3,3,1,3,1,2,3,1,3,1,3,1,3,1,1,3,3,1,1,1,3,3,3,1,3,1,2,3,1,1,3,1,1,3,3,1,3,1,1,1,3,1,3,1,1,1,3,1,3,1,1,1,3,1,3,1,3,1,3],
+  "OBED":   [1,1,2,3,2,3,1,2,2,1,3,1,3,2,3,1,3,1,1,2,1,1,1,1,1,3,1,1,2,1,1,1,1,3,2,2,1,2,1,3,3,1,1,3,1,2,3,3,1,3,1,3,1,3,3,2,1,3,3,3,1,3,2,1,1,3,2,3,1,1,3,3],
+  "TONA":   [1,1,2,2,3,3,2,3,2,1,1,1,2,3,3,1,3,1,2,2,2,1,1,2,1,3,1,1,3,2,2,2,1,3,1,3,1,1,1,3,3,3,1,3,1,1,2,3,2,3,1,3,1,3,1,1,1,3,2,3,1,3,1,2,1,3,2,1,1,3,2,3]
+};
+
+const MATCH_GROUP = {};
+Object.entries(GROUPS).forEach(([g,ms]) => ms.forEach(m => MATCH_GROUP[m] = g));
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let results = {};
+let currentGroup = 'all';
+const ME = 'BRIAN';
+
+function loadStorage() {
+  try { const s = localStorage.getItem('q2026'); if (s) results = JSON.parse(s); } catch(e){}
+}
+function saveStorage() {
+  try { localStorage.setItem('q2026', JSON.stringify(results)); } catch(e){}
+}
+function loadToken() {
+  try { return localStorage.getItem('q2026_token') || ''; } catch(e){ return ''; }
+}
+function saveToken() {
+  const t = document.getElementById('token-input').value.trim();
+  try { localStorage.setItem('q2026_token', t); } catch(e){}
+  document.getElementById('token-status').textContent = t ? '✓ Token guardado. Usa "Actualizar" para cargar resultados.' : 'Token borrado.';
+  toast('Token guardado');
+}
+
+// ── SCORING ──────────────────────────────────────────────────────────────────
+function getOutcome(v) {
+  if (v === undefined || v === null || v === '') return null;
+  const n = parseInt(v);
+  if (n === 1 || n === 2 || n === 3) return n;
+  return null;
+}
+function calcScores() {
+  const scores = {}, details = {};
+  Object.keys(QUINIELAS).forEach(n => { scores[n] = 0; details[n] = {}; });
+  MATCHES.forEach((m, i) => {
+    const a = getOutcome(results[m]);
+    if (a === null) return;
+    Object.keys(QUINIELAS).forEach(n => {
+      const hit = QUINIELAS[n][i] === a;
+      if (hit) scores[n]++;
+      details[n][m] = hit;
+    });
+  });
+  return { scores, details };
+}
+function countPlayed() {
+  return MATCHES.filter(m => getOutcome(results[m]) !== null).length;
+}
+
+// ── RENDER: POSICIONES ───────────────────────────────────────────────────────
+function renderRanking() {
+  const { scores } = calcScores();
+  const played = countPlayed();
+  const q = (document.getElementById('search')?.value || '').toUpperCase();
+  const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+
+  // Podium
+  const medals = ['🥇','🥈','🥉'];
+  const podCls = ['gold','silver','bronze'];
+  document.getElementById('podium').innerHTML = sorted.slice(0,3).map(([n,p],i) =>
+    `<div class="pod ${podCls[i]}"><span class="pod-medal">${medals[i]}</span><p class="pod-name">${n}</p><p class="pod-pts">${p}</p><p class="pod-of">de ${played} posibles</p></div>`
+  ).join('');
+
+  const maxPts = sorted[0]?.[1] || 1;
+  const filtered = sorted.filter(([n]) => !q || n.includes(q));
+  document.getElementById('rank-body').innerHTML = filtered.map(([n,p]) => {
+    const rank = sorted.findIndex(([x]) => x===n)+1;
+    const pct = played > 0 ? Math.round(p/played*100) : 0;
+    const isMe = n === ME;
+    return `<tr class="${isMe?'me':''}">
+      <td style="color:var(--text3);font-size:11px;width:28px">${rank}</td>
+      <td style="font-weight:${isMe?600:400}">${isMe?'👤 ':''}${n}</td>
+      <td><span class="pts-pill">${p} pts</span></td>
+      <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${Math.round(p/maxPts*100)}%"></div></div><span class="pct">${played>0?pct+'%':'-'}</span></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── RENDER: PARTIDOS ─────────────────────────────────────────────────────────
+function renderMatches() {
+  const { details } = calcScores();
+  const toShow = currentGroup === 'all' ? MATCHES : (GROUPS[currentGroup] || []);
+
+  // Filter bar
+  document.getElementById('group-filters').innerHTML =
+    ['all','A','B','C','D','E','F','G','H','I','J','K','L'].map(g =>
+      `<button class="filter-btn ${currentGroup===g?'active':''}" onclick="setGroup('${g}')">${g==='all'?'Todos':'Grupo '+g}</button>`
+    ).join('');
+
+  let html = '', lastG = '';
+  toShow.forEach(match => {
+    const idx = MATCHES.indexOf(match);
+    const g = MATCH_GROUP[match];
+    const [t1,t2] = match.split('-');
+    const actual = getOutcome(results[match]);
+    const played = actual !== null;
+
+    if (currentGroup === 'all' && g !== lastG) {
+      html += `<p class="group-label">Grupo ${g}</p>`;
+      lastG = g;
+    }
+
+    const resLabel = actual===1?(NAMES[t1]||t1)+' gana':actual===2?'Empate':actual===3?(NAMES[t2]||t2)+' gana':'Sin resultado';
+    const resCls = actual===1?'res-1':actual===2?'res-x':actual===3?'res-2':'res-none';
+
+    const chips = Object.entries(QUINIELAS).map(([name, preds]) => {
+      const pred = preds[idx];
+      const label = pred===1?'1':pred===2?'X':'2';
+      const cls = played ? (pred===actual?'hit':'miss') : '';
+      return `<span class="chip ${cls}" title="${name}: predijo ${label}">${name.substring(0,4)} ${label}</span>`;
+    }).join('');
+
+    html += `<div class="match-card ${played?'played':''}">
+      <div class="match-head">
+        <div class="teams"><span class="flag">${FLAGS[t1]||''}</span> <strong>${t1}</strong><span class="sep">vs</span><strong>${t2}</strong> <span class="flag">${FLAGS[t2]||''}</span></div>
+        <span class="res-badge ${resCls}">${resLabel}</span>
+      </div>
+      <div class="pred-row">${chips}</div>
+    </div>`;
+  });
+
+  document.getElementById('matches-list').innerHTML = html || '<p class="empty">Sin partidos</p>';
+}
+
+// ── RENDER: ESTADÍSTICAS ─────────────────────────────────────────────────────
+function renderStats() {
+  const { scores } = calcScores();
+  const played = countPlayed();
+  const sv = Object.values(scores).sort((a,b) => b-a);
+  const max = sv[0] || 0;
+  const avg = sv.length ? (sv.reduce((a,b)=>a+b,0)/sv.length).toFixed(1) : 0;
+  const myScore = scores[ME] || 0;
+  const myRank = sv.filter(s=>s>myScore).length+1;
+  const leader = Object.entries(scores).find(([,v])=>v===max)?.[0] || '-';
+
+  document.getElementById('stats-grid').innerHTML = [
+    {l:'Partidos jugados', v:`${played}`, s:`de ${MATCHES.length} totales`},
+    {l:'Mi posición ('+ME+')', v:`#${myRank}`, s:`${myScore} puntos`},
+    {l:'Promedio del grupo', v:`${avg}`, s:'puntos por participante'},
+    {l:'Líder actual', v:leader, s:`con ${max} puntos`},
+  ].map(({l,v,s}) => `<div class="stat-card"><p class="stat-label">${l}</p><p class="stat-val">${v}</p><p class="stat-sub">${s}</p></div>`).join('');
+
+  // Match hit rates
+  const hitMap = {};
+  MATCHES.forEach(m => {
+    const a = getOutcome(results[m]);
+    if (a === null) return;
+    const idx = MATCHES.indexOf(m);
+    hitMap[m] = Object.values(QUINIELAS).filter(p => p[idx]===a).length;
+  });
+  const played2 = Object.entries(hitMap);
+
+  const matchCard = ([m,h]) => {
+    const [t1,t2] = m.split('-');
+    const a = getOutcome(results[m]);
+    const winner = a===1?(NAMES[t1]||t1):a===2?'Empate':(NAMES[t2]||t2);
+    return `<div class="match-card played" style="margin-bottom:6px"><div class="match-head"><span style="font-size:13px">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''}</span><span class="pts-pill">${h}/${Object.keys(QUINIELAS).length}</span></div><p style="font-size:11px;color:var(--text3);margin-top:4px">Resultado: ${winner}</p></div>`;
+  };
+
+  const top = [...played2].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const bot = [...played2].sort((a,b)=>a[1]-b[1]).slice(0,5);
+  document.getElementById('most-correct').innerHTML = top.length ? top.map(matchCard).join('') : '<p class="empty">Aún no hay partidos jugados</p>';
+  document.getElementById('least-correct').innerHTML = bot.length ? bot.map(matchCard).join('') : '<p class="empty">Aún no hay partidos jugados</p>';
+}
+
+// ── RENDER: ADMIN ────────────────────────────────────────────────────────────
+function renderAdmin() {
+  const tok = loadToken();
+  if (tok) {
+    document.getElementById('token-input').value = tok;
+    document.getElementById('token-status').textContent = '✓ Token guardado';
+  }
+
+  let html = '', lastG = '';
+  MATCHES.forEach(match => {
+    const g = MATCH_GROUP[match];
+    const [t1,t2] = match.split('-');
+    const cur = getOutcome(results[match]);
+    if (g !== lastG) { html += `<p class="group-label">Grupo ${g}</p>`; lastG = g; }
+    html += `<div class="match-card ${cur?'played':''}" style="margin-bottom:6px">
+      <div class="match-row">
+        <span style="font-size:13px">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''}</span>
+        <select class="res-sel" onchange="setResult('${match}',this.value)">
+          <option value="" ${!cur?'selected':''}>— sin resultado</option>
+          <option value="1" ${cur===1?'selected':''}>1 · ${NAMES[t1]||t1} gana</option>
+          <option value="2" ${cur===2?'selected':''}>X · Empate</option>
+          <option value="3" ${cur===3?'selected':''}>2 · ${NAMES[t2]||t2} gana</option>
+        </select>
+      </div>
+    </div>`;
+  });
+  document.getElementById('manual-inputs').innerHTML = html;
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────────────────────
+function setGroup(g) { currentGroup = g; renderMatches(); }
+
+function setResult(match, val) {
+  if (val === '') delete results[match];
+  else results[match] = parseInt(val);
+  saveStorage();
+  renderRanking();
+  renderStats();
+  toast('Resultado guardado');
+}
+
+function clearAll() {
+  if (!confirm('¿Borrar todos los resultados?')) return;
+  results = {};
+  saveStorage();
+  renderAll();
+  toast('Resultados borrados');
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name === 'partidos') renderMatches();
+  if (name === 'stats') renderStats();
+  if (name === 'admin') renderAdmin();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function updateStatus() {
+  const played = countPlayed();
+  document.getElementById('header-status').textContent = `${played}/${MATCHES.length} partidos`;
+  document.getElementById('last-upd').textContent = played > 0 ? `${played} resultados guardados` : 'Sin resultados aún';
+}
+
+// ── API ──────────────────────────────────────────────────────────────────────
+// Mapeo de códigos FIFA → nuestras abreviaciones
+const FIFA_MAP = {
+  MEX:'MEX',RSA:'RSA',KOR:'COR',CRC:'RPC',CAN:'CAN',BIH:'BOS',QAT:'QAT',SUI:'SUI',
+  BRA:'BRA',MAR:'MAR',HAI:'HAI',SCO:'ESC',USA:'USA',PAR:'PAR',AUS:'AUS',TUR:'TUR',
+  GER:'ALE',CUW:'CUR',CIV:'CDM',ECU:'ECU',NED:'PBA',JPN:'JAP',SWE:'SUE',TUN:'TUN',
+  BEL:'BEL',EGY:'EGI',IRN:'IRA',NZL:'NZL',ESP:'ESP',CPV:'CAB',KSA:'ARA',URU:'URU',
+  FRA:'FRA',SEN:'SEN',IRQ:'IRK',NOR:'NOR',ARG:'ARG',DZA:'ALG',AUT:'AUT',JOR:'JOR',
+  POR:'POR',COD:'RDC',UZB:'UZB',COL:'COL',ENG:'ING',CRO:'CRO',GHA:'GHA',PAN:'PAN'
+};
+
+async function tryFetchAPI() {
+  const token = loadToken();
+  document.getElementById('header-status').textContent = '↻ Cargando...';
+
+  if (!token) {
+    toast('Agrega tu token en ⚙ Resultados para carga automática');
+    document.getElementById('header-status').textContent = 'Sin token de API';
+    return;
+  }
+
+  try {
+    const r = await fetch('https://api.football-data.org/v4/competitions/WC/matches?season=2026', {
+      headers: { 'X-Auth-Token': token }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    let count = 0;
+    (data.matches || []).forEach(m => {
+      if (m.status !== 'FINISHED') return;
+      const h = FIFA_MAP[m.homeTeam?.tla] || m.homeTeam?.tla || '';
+      const a = FIFA_MAP[m.awayTeam?.tla] || m.awayTeam?.tla || '';
+      const hg = m.score?.fullTime?.home;
+      const ag = m.score?.fullTime?.away;
+      if (hg === null || ag === null) return;
+      const key1 = `${h}-${a}`, key2 = `${a}-${h}`;
+      if (MATCHES.includes(key1)) { results[key1] = hg>ag?1:hg===ag?2:3; count++; }
+      else if (MATCHES.includes(key2)) { results[key2] = ag>hg?1:ag===hg?2:3; count++; }
+    });
+    saveStorage();
+    toast(`✓ ${count} resultados cargados`);
+    document.getElementById('last-upd').textContent = `API · ${new Date().toLocaleTimeString('es-MX')} · ${count} resultados`;
+    renderAll();
+  } catch(e) {
+    toast('Error de API: ' + e.message);
+    document.getElementById('header-status').textContent = 'Error de API';
+  }
+  updateStatus();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderRanking();
+  updateStatus();
+}
+
+loadStorage();
+renderAll();
+
+// Auto-refresh cada 5 minutos si hay token
+const tok = loadToken();
+if (tok) {
+  tryFetchAPI();
+  setInterval(tryFetchAPI, 5 * 60 * 1000);
+}
+</script>
+</body>
+</html>
