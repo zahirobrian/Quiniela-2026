@@ -301,11 +301,14 @@ async function tryFetchAPI() {
       const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
       const match = cols[0].toUpperCase();
       const raw = (cols[1] || '').toUpperCase();
+      // Ignorar filas que no sean partidos validos (headers, instrucciones, vacias)
       if (!MATCHES.includes(match)) return;
-      if (!raw || raw === '' || raw === 'RESULTADO') return;
-      if (raw === '1') results[match] = 1;
+      if (!raw) return;
+      // raw puede venir como '1', '2', 'X', '1.0', '2.0' etc
+      const n = parseFloat(raw);
+      if (raw === '1' || n === 1) results[match] = 1;
       else if (raw === 'X') results[match] = 2;
-      else if (raw === '2') results[match] = 3;
+      else if (raw === '2' || n === 2) results[match] = 3;
       if (results[match]) count++;
     });
     saveStorage();
