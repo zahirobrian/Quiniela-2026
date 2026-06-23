@@ -365,8 +365,9 @@ function renderDuel(){
     if(pred2===actual) p2key++;
   });
 
-  const pending=diffs.filter(d=>getOutcome(results[d.match])===null);
-  const played2=diffs.filter(d=>getOutcome(results[d.match])!==null);
+  const dateVal = m => MATCH_DATES[m] ? new Date(MATCH_DATES[m]).getTime() : 99999999999;
+  const pending=diffs.filter(d=>getOutcome(results[d.match])===null).sort((a,b)=>dateVal(a.match)-dateVal(b.match));
+  const played2=diffs.filter(d=>getOutcome(results[d.match])!==null).sort((a,b)=>dateVal(a.match)-dateVal(b.match));
 
   const isTied=topScore===secondScore;
 
@@ -396,8 +397,6 @@ function renderDuel(){
     <div class="duel-body" style="display:${duelOpen?'block':'none'}">
       ${isTied?`<div class="duel-tie">🤝 Empate en el primer lugar — los partidos pendientes decidirán al ganador</div>`:''}
       ${pending.length===0&&played2.length===0?'<p style="font-size:12px;color:var(--text3);text-align:center;padding:8px">No hay partidos donde difieran sus predicciones</p>':''}`;
-
-  pending.sort((a,b)=>(MATCH_DATES[a.match]||'9999').localeCompare(MATCH_DATES[b.match]||'9999'));
 
   if(pending.length>0){
     html+=`<p style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🔥 Partidos clave pendientes (${pending.length})</p>`;
