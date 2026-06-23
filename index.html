@@ -264,6 +264,20 @@ const QUINIELAS = {
 
 const MATCH_GROUP = {};
 Object.entries(GROUPS).forEach(([g,ms]) => ms.forEach(m => MATCH_GROUP[m] = g));
+const MATCH_DATES = {
+  "MEX-RSA":"2026-06-11","COR-RPC":"2026-06-11","RPC-RSA":"2026-06-15","MEX-COR":"2026-06-15","RSA-COR":"2026-06-19","RPC-MEX":"2026-06-19",
+  "CAN-BOS":"2026-06-12","QAT-SUI":"2026-06-12","SUI-BOS":"2026-06-16","CAN-QTA":"2026-06-16","BOS-QAT":"2026-06-20","SUI-CAN":"2026-06-20",
+  "BRA-MAR":"2026-06-13","HAI-ESC":"2026-06-13","ESC-MAR":"2026-06-17","BRA-HAI":"2026-06-17","ESC-BRA":"2026-06-21","MAR-HAI":"2026-06-21",
+  "USA-PAR":"2026-06-12","AUS-TUR":"2026-06-13","USA-AUS":"2026-06-17","TUR-PAR":"2026-06-17","PAR-AUS":"2026-06-21","TUR-USA":"2026-06-21",
+  "ALE-CUR":"2026-06-14","CDM-ECU":"2026-06-14","ALE-CDM":"2026-06-18","ECU-CUR":"2026-06-18","CUR-CDM":"2026-06-22","ECU-ALE":"2026-06-22",
+  "PBA-JAP":"2026-06-14","SUE-TUN":"2026-06-14","PBA-SUE":"2026-06-18","TUN-JAP":"2026-06-18","JAP-SUE":"2026-06-22","TUN-PBA":"2026-06-22",
+  "BEL-EGI":"2026-06-15","IRA-NZL":"2026-06-15","BEL-IRA":"2026-06-19","NZL-EGI":"2026-06-19","NZL-BEL":"2026-06-23","EGI-PARA":"2026-06-23",
+  "ESP-CAB":"2026-06-15","ARA-URU":"2026-06-15","ESP-ARA":"2026-06-19","URU-CAB":"2026-06-19","CAB-ARA":"2026-06-23","URU-ESP":"2026-06-23",
+  "FRA-SEN":"2026-06-16","IRK-NOR":"2026-06-16","FRA-IRK":"2026-06-20","NOR-SEN":"2026-06-20","SEN-IRK":"2026-06-24","NOR-FRA":"2026-06-24",
+  "ARG-ALG":"2026-06-16","AUT-JOR":"2026-06-16","ARG-AUT":"2026-06-20","JOR-ALG":"2026-06-20","ALG-AUT":"2026-06-24","JOR-ARG":"2026-06-24",
+  "POR-RDC":"2026-06-17","UZB-COL":"2026-06-17","POR-UZB":"2026-06-21","COL-RDC":"2026-06-21","RDC-UZB":"2026-06-25","COL-POR":"2026-06-25",
+  "ING-CRO":"2026-06-17","GHA-PAN":"2026-06-17","ING-GHA":"2026-06-21","PAN-CRO":"2026-06-21","CRO-GHA":"2026-06-25","PAN-ING":"2026-06-25"
+};
 const SHEET_ID = '1ADCVvutpcqITblMHM3OLj_GXnRXJkwJBhcWiUXaKs6Q';
 const ME = 'BRIAN';
 
@@ -383,11 +397,14 @@ function renderDuel(){
       ${isTied?`<div class="duel-tie">🤝 Empate en el primer lugar — los partidos pendientes decidirán al ganador</div>`:''}
       ${pending.length===0&&played2.length===0?'<p style="font-size:12px;color:var(--text3);text-align:center;padding:8px">No hay partidos donde difieran sus predicciones</p>':''}`;
 
+  pending.sort((a,b)=>(MATCH_DATES[a.match]||'9999').localeCompare(MATCH_DATES[b.match]||'9999'));
+
   if(pending.length>0){
     html+=`<p style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">🔥 Partidos clave pendientes (${pending.length})</p>`;
     pending.forEach(({match,pred1,pred2,t1,t2})=>{
+      const dStr=MATCH_DATES[match]?new Date(MATCH_DATES[match]+'T12:00:00').toLocaleDateString('es-MX',{month:'short',day:'numeric'}):'';
       html+=`<div class="duel-match pending">
-        <span class="duel-match-name">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''}</span>
+        <span class="duel-match-name">${FLAGS[t1]||''} ${t1} vs ${t2} ${FLAGS[t2]||''} <span style="font-size:10px;color:var(--text3)">${dStr}</span></span>
         <div class="duel-preds">
           <span class="duel-pred p1" title="${p1name}">${predLabel(pred1)}</span>
           <span style="font-size:10px;color:var(--text3)">vs</span>
